@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>EmeraldFlow - Luxury Node & MindMap Studio</title>
+  <style>
+    :root {
+      --bg-dark: #060907;
+      --panel-bg: #0d1410;
+      --card-bg: #121c16;
+      --card-border: #1e3326;
+      --emerald-primary: #00e676;
+      --emerald-dark: #008f4c;
+      --emerald-light: #69f0ae;
+      --emerald-glow: rgba(0, 230, 118, 0.35);
+      --gold-accent: #d4af37;
+      --text-main: #f1f8f3;
+      --text-muted: #7d9687;
+      --danger: #ff5252;
+      --radius: 10px;
+      --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top Navigation / App Header */
+    header {
+      background-color: var(--panel-bg);
+      border-bottom: 1px solid var(--card-border);
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 50;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    }
+
+    .brand-group {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .brand-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: 1px;
+      background: linear-gradient(135deg, #a7f3d0 0%, #00e676 50%, #008f4c 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+    }
+
+    .dev-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+      margin-top: 1px;
+    }
+
+    .pulse-dot {
+      width: 7px;
+      height: 7px;
+      background-color: var(--emerald-primary);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--emerald-primary);
+      animation: emeraldPulse 1.8s infinite ease-in-out;
+    }
+
+    @keyframes emeraldPulse {
+      0% {
+        transform: scale(0.9);
+        box-shadow: 0 0 2px var(--emerald-primary);
+        opacity: 0.7;
+      }
+      50% {
+        transform: scale(1.3);
+        box-shadow: 0 0 12px var(--emerald-primary), 0 0 4px #fff;
+        opacity: 1;
+      }
+      100% {
+        transform: scale(0.9);
+        box-shadow: 0 0 2px var(--emerald-primary);
+        opacity: 0.7;
+      }
+    }
+
+    /* Toolbar Action Controls */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, var(--emerald-primary), var(--emerald-dark));
+      color: #040805;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.75rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: var(--transition);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    .btn-secondary {
+      background: #15221b;
+      color: var(--emerald-light);
+      border: 1px solid var(--card-border);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--emerald-primary);
+      box-shadow: 0 0 8px var(--emerald-glow);
+    }
+
+    .btn-danger {
+      background: rgba(255, 82, 82, 0.15);
+      color: var(--danger);
+      border: 1px solid rgba(255, 82, 82, 0.3);
+    }
+
+    .btn-danger:hover {
+      background: var(--danger);
+      color: #fff;
+    }
+
+    /* Canvas Viewport */
+    #viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      cursor: grab;
+      background-size: 24px 24px;
+      background-image: 
+        radial-gradient(circle, #16291e 1px, transparent 1px);
+    }
+
+    #viewport:active {
+      cursor: grabbing;
+    }
+
+    #renderSurface {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* Interactive Node Card */
+    .mind-node {
+      position: absolute;
+      min-width: 140px;
+      max-width: 240px;
+      background: linear-gradient(180deg, #16241c 0%, var(--card-bg) 100%);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius);
+      padding: 10px 12px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+      z-index: 20;
+      cursor: move;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .mind-node.selected {
+      border-color: var(--emerald-primary);
+      box-shadow: 0 0 14px var(--emerald-glow);
+    }
+
+    .mind-node.connecting-source {
+      border-color: var(--gold-accent);
+      box-shadow: 0 0 14px rgba(212, 175, 55, 0.5);
+    }
+
+    .node-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      padding-bottom: 4px;
+    }
+
+    .node-tag {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--emerald-light);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .node-tools {
+      display: flex;
+      gap: 4px;
+    }
+
+    .node-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 2px 4px;
+      border-radius: 4px;
+      transition: var(--transition);
+    }
+
+    .node-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .node-btn.delete:hover {
+      color: var(--danger);
+    }
+
+    .node-body {
+      font-size: 0.85rem;
+      color: var(--text-main);
+      line-height: 1.35;
+      outline: none;
+      word-break: break-word;
+      user-select: text;
+    }
+
+    .node-body[contenteditable="true"] {
+      cursor: text;
+      padding: 2px 4px;
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 4px;
+    }
+
+    /* Floating Hint Badge */
+    .floating-hint {
+      position: absolute;
+      bottom: 16px;
+      left: 16px;
+      background: rgba(13, 20, 16, 0.85);
+      border: 1px solid var(--card-border);
+      backdrop-filter: blur(8px);
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      z-index: 40;
+      pointer-events: none;
+    }
+
+    .floating-hint strong {
+      color: var(--emerald-light);
+    }
+
+    /* Modal / File Input Utilities */
+    .file-wrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    .file-wrapper input[type="file"] {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Application Bar -->
+  <header>
+    <div class="brand-group">
+      <h1 class="brand-title">EmeraldFlow</h1>
+      <div class="dev-badge">
+        <span class="pulse-dot"></span>
+        <span>developer : fatur62</span>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <button class="btn" id="btnAddNode">+ Node Baru</button>
+      <button class="btn btn-secondary" id="btnExportPNG">Export PNG</button>
+      <button class="btn btn-secondary" id="btnExportJSON">Backup</button>
+      <div class="file-wrapper">
+        <button class="btn btn-secondary">Restore</button>
+        <input type="file" id="importFileInput" accept=".json" />
+      </div>
+      <button class="btn btn-danger" id="btnClearCanvas" title="Reset Semua">✕</button>
+    </div>
+  </header>
+
+  <!-- Interactive Workspace Canvas -->
+  <main id="viewport">
+    <canvas id="renderSurface"></canvas>
+    <!-- Dynamic HTML Nodes inserted here -->
+    <div class="floating-hint">
+      Klik 2x kanvas: <strong>Buat Node</strong> | Klik tombol ⚡: <strong>Tarik Garis Relasi</strong>
+    </div>
+  </main>
+
+  <script>
+    // Storage Key & Central State
+    const STORAGE_KEY = "emeraldflow_v1_fatur62";
+    let state = {
+      nodes: [],
+      connections: []
+    };
+
+    let activeConnectingSourceId = null;
+    let draggedNodeId = null;
+    let dragOffset = { x: 0, y: 0 };
+
+    const viewport = document.getElementById("viewport");
+    const canvas = document.getElementById("renderSurface");
+    const ctx = canvas.getContext("2d");
+
+    // Menyesuaikan Ukuran Canvas secara Responsif
+    const resizeCanvas = () => {
+      canvas.width = viewport.clientWidth;
+      canvas.height = viewport.clientHeight;
+      drawConnections();
+    };
+
+    window.addEventListener("resize", resizeCanvas);
+
+    // Sanitasi Teks Anti-XSS
+    const escapeHTML = (str) => {
+      const div = document.createElement("div");
+      div.textContent = str;
+      return div.innerHTML;
+    };
+
+    // Load State dari LocalStorage Secara Aman
+    const loadState = () => {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          initDefaultData();
+          return;
+        }
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.nodes) && Array.isArray(parsed.connections)) {
+          state = parsed;
+        } else {
+          initDefaultData();
+        }
+      } catch (err) {
+        console.error("Gagal parse LocalStorage JSON:", err);
+        initDefaultData();
+      }
+    };
+
+    const saveState = () => {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      } catch (err) {
+        console.error("Penyimpanan lokal gagal:", err);
+      }
+    };
+
+    // Data Awal Bawaan jika Storage Kosong
+    const initDefaultData = () => {
+      state = {
+        nodes: [
+          { id: "node_1", x: 100, y: 120, tag: "Root", text: "Ide Utama Proyek 20" },
+          { id: "node_2", x: 380, y: 80, tag: "Fitur", text: "Arsitektur 1 File index.html" },
+          { id: "node_3", x: 380, y: 220, tag: "Desain", text: "Emerald Luxury Theme" }
+        ],
+        connections: [
+          { id: "conn_1", from: "node_1", to: "node_2" },
+          { id: "conn_2", from: "node_1", to: "node_3" }
+        ]
+      };
+      saveState();
+    };
+
+    // Gambar Garis Relasi Lengkung (Cubic Bézier Curve)
+    const drawConnections = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      state.connections.forEach(conn => {
+        const fromNode = state.nodes.find(n => n.id === conn.from);
+        const toNode = state.nodes.find(n => n.id === conn.to);
+
+        if (!fromNode || !toNode) return;
+
+        const fromElem = document.getElementById(fromNode.id);
+        const toElem = document.getElementById(toNode.id);
+
+        if (!fromElem || !toElem) return;
+
+        const startX = fromNode.x + fromElem.offsetWidth;
+        const startY = fromNode.y + fromElem.offsetHeight / 2;
+        const endX = toNode.x;
+        const endY = toNode.y + toElem.offsetHeight / 2;
+
+        const dx = Math.max(Math.abs(endX - startX) * 0.5, 40);
+
+        // Gradient Jalur Garis Emerald Luxury
+        const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
+        gradient.addColorStop(0, "#00e676");
+        gradient.addColorStop(1, "#69f0ae");
+
+        ctx.beginPath();
+        ctx.moveTo(startX, startY);
+        ctx.bezierCurveTo(startX + dx, startY, endX - dx, endY, endX, endY);
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = "rgba(0, 230, 118, 0.4)";
+        ctx.shadowBlur = 8;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Gambar Titik Panah Lingkaran di Ujung Tujuan
+        ctx.beginPath();
+        ctx.arc(endX, endY, 4, 0, Math.PI * 2);
+        ctx.fillStyle = "#69f0ae";
+        ctx.fill();
+      });
+    };
+
+    // Render Ulang Seluruh Elemen DOM Node
+    const renderNodes = () => {
+      // Hapus node DOM lama tanpa menghapus canvas dan hint
+      const existingNodes = viewport.querySelectorAll(".mind-node");
+      existingNodes.forEach(n => n.remove());
+
+      state.nodes.forEach(node => {
+        const nodeDiv = document.createElement("div");
+        nodeDiv.className = "mind-node";
+        nodeDiv.id = node.id;
+        nodeDiv.style.left = `${node.x}px`;
+        nodeDiv.style.top = `${node.y}px`;
+
+        if (activeConnectingSourceId === node.id) {
+          nodeDiv.classList.add("connecting-source");
+        }
+
+        nodeDiv.innerHTML = `
+          <div class="node-header">
+            <span class="node-tag">${escapeHTML(node.tag || "Node")}</span>
+            <div class="node-tools">
+              <button class="node-btn connect-btn" title="Hubungkan Relasi">⚡</button>
+              <button class="node-btn delete-btn" title="Hapus Node">✕</button>
+            </div>
+          </div>
+          <div class="node-body" contenteditable="true">${escapeHTML(node.text || "Tulis catatan...")}</div>
+        `;
+
+        // Event Drag Node
+        nodeDiv.addEventListener("mousedown", (e) => {
+          if (e.target.closest(".node-btn") || e.target.classList.contains("node-body")) return;
+          draggedNodeId = node.id;
+          dragOffset.x = e.clientX - node.x;
+          dragOffset.y = e.clientY - node.y;
+          nodeDiv.classList.add("selected");
+        });
+
+        // Event Simpan Edit Teks Inline
+        const bodyElem = nodeDiv.querySelector(".node-body");
+        bodyElem.addEventListener("blur", () => {
+          node.text = bodyElem.innerText.trim() || "Catatan Kosong";
+          saveState();
+        });
+
+        // Event Hubungkan Relasi
+        const connBtn = nodeDiv.querySelector(".connect-btn");
+        connBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          handleConnectionToggle(node.id);
+        });
+
+        // Event Hapus Node
+        const deleteBtn = nodeDiv.querySelector(".delete-btn");
+        deleteBtn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          deleteNode(node.id);
+        });
+
+        viewport.appendChild(nodeDiv);
+      });
+
+      drawConnections();
+    };
+
+    // Logic Menghubungkan Dua Node
+    const handleConnectionToggle = (nodeId) => {
+      if (!activeConnectingSourceId) {
+        activeConnectingSourceId = nodeId;
+        renderNodes();
+      } else if (activeConnectingSourceId === nodeId) {
+        activeConnectingSourceId = null;
+        renderNodes();
+      } else {
+        // Cek apakah relasi sudah ada
+        const exists = state.connections.some(
+          c => (c.from === activeConnectingSourceId && c.to === nodeId)
+        );
+
+        if (!exists) {
+          state.connections.push({
+            id: `conn_${Date.now()}`,
+            from: activeConnectingSourceId,
+            to: nodeId
+          });
+          saveState();
+        }
+        activeConnectingSourceId = null;
+        renderNodes();
+      }
+    };
+
+    // Hapus Node beserta Relasi yang Terhubung
+    const deleteNode = (nodeId) => {
+      state.nodes = state.nodes.filter(n => n.id !== nodeId);
+      state.connections = state.connections.filter(c => c.from !== nodeId && c.to !== nodeId);
+      if (activeConnectingSourceId === nodeId) activeConnectingSourceId = null;
+      saveState();
+      renderNodes();
+    };
+
+    // Tambah Node Baru
+    const createNewNode = (x = 180, y = 160) => {
+      const newNode = {
+        id: `node_${Date.now()}`,
+        x: Math.max(20, x),
+        y: Math.max(20, y),
+        tag: "Ide",
+        text: "Ketik konsep baru..."
+      };
+      state.nodes.push(newNode);
+      saveState();
+      renderNodes();
+    };
+
+    // Event Global Drag Movement
+    window.addEventListener("mousemove", (e) => {
+      if (!draggedNodeId) return;
+
+      const node = state.nodes.find(n => n.id === draggedNodeId);
+      if (!node) return;
+
+      node.x = Math.max(10, e.clientX - dragOffset.x);
+      node.y = Math.max(10, e.clientY - dragOffset.y);
+
+      const elem = document.getElementById(node.id);
+      if (elem) {
+        elem.style.left = `${node.x}px`;
+        elem.style.top = `${node.y}px`;
+      }
+
+      drawConnections();
+    });
+
+    window.addEventListener("mouseup", () => {
+      if (draggedNodeId) {
+        const elem = document.getElementById(draggedNodeId);
+        if (elem) elem.classList.remove("selected");
+        draggedNodeId = null;
+        saveState();
+      }
+    });
+
+    // Double-Click Kanvas Kosong untuk Bikin Node
+    viewport.addEventListener("dblclick", (e) => {
+      if (e.target === viewport || e.target === canvas) {
+        createNewNode(e.clientX - 80, e.clientY - 40);
+      }
+    });
+
+    // Handler Tombol Header
+    document.getElementById("btnAddNode").addEventListener("click", () => createNewNode());
+
+    document.getElementById("btnClearCanvas").addEventListener("click", () => {
+      if (confirm("Hapus seluruh node dan diagram?")) {
+        state = { nodes: [], connections: [] };
+        saveState();
+        renderNodes();
+      }
+    });
+
+    // Backup Data JSON
+    document.getElementById("btnExportJSON").addEventListener("click", () => {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
+      const anchor = document.createElement("a");
+      anchor.setAttribute("href", dataStr);
+      anchor.setAttribute("download", `emeraldflow_backup_${Date.now()}.json`);
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+    });
+
+    // Restore Data JSON
+    document.getElementById("importFileInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const parsed = JSON.parse(event.target.result);
+          if (parsed && Array.isArray(parsed.nodes) && Array.isArray(parsed.connections)) {
+            state = parsed;
+            saveState();
+            renderNodes();
+            alert("Mindmap berhasil dipulihkan!");
+          } else {
+            alert("Format JSON tidak valid!");
+          }
+        } catch (err) {
+          alert("Gagal membaca file JSON.");
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    });
+
+    // Export High-Resolution PNG
+    document.getElementById("btnExportPNG").addEventListener("click", () => {
+      const exportCanvas = document.createElement("canvas");
+      exportCanvas.width = viewport.clientWidth * 2;
+      exportCanvas.height = viewport.clientHeight * 2;
+      const expCtx = exportCanvas.getContext("2d");
+      expCtx.scale(2, 2);
+
+      // Background Emerald Gelap
+      expCtx.fillStyle = "#060907";
+      expCtx.fillRect(0, 0, viewport.clientWidth, viewport.clientHeight);
+
+      // Render Connections pada Export Canvas
+      state.connections.forEach(conn => {
+        const fromNode = state.nodes.find(n => n.id === conn.from);
+        const toNode = state.nodes.find(n => n.id === conn.to);
+        if (!fromNode || !toNode) return;
+
+        const fromElem = document.getElementById(fromNode.id);
+        const toElem = document.getElementById(toNode.id);
+        if (!fromElem || !toElem) return;
+
+        const startX = fromNode.x + fromElem.offsetWidth;
+        const startY = fromNode.y + fromElem.offsetHeight / 2;
+        const endX = toNode.x;
+        const endY = toNode.y + toElem.offsetHeight / 2;
+        const dx = Math.max(Math.abs(endX - startX) * 0.5, 40);
+
+        expCtx.beginPath();
+        expCtx.moveTo(startX, startY);
+        expCtx.bezierCurveTo(startX + dx, startY, endX - dx, endY, endX, endY);
+        expCtx.strokeStyle = "#00e676";
+        expCtx.lineWidth = 2.5;
+        expCtx.stroke();
+      });
+
+      // Render Nodes ke Canvas
+      state.nodes.forEach(node => {
+        const elem = document.getElementById(node.id);
+        if (!elem) return;
+
+        const w = elem.offsetWidth;
+        const h = elem.offsetHeight;
+
+        // Card Box
+        expCtx.fillStyle = "#121c16";
+        expCtx.strokeStyle = "#1e3326";
+        expCtx.lineWidth = 1;
+        expCtx.beginPath();
+        expCtx.roundRect(node.x, node.y, w, h, 8);
+        expCtx.fill();
+        expCtx.stroke();
+
+        // Card Header Tag
+        expCtx.fillStyle = "#69f0ae";
+        expCtx.font = "bold 10px sans-serif";
+        expCtx.fillText((node.tag || "Node").toUpperCase(), node.x + 10, node.y + 16);
+
+        // Card Text Content
+        expCtx.fillStyle = "#f1f8f3";
+        expCtx.font = "12px sans-serif";
+        expCtx.fillText(node.text || "", node.x + 10, node.y + 36);
+      });
+
+      // Trigger Download
+      const link = document.createElement("a");
+      link.download = `emeraldflow_diagram_${Date.now()}.png`;
+      link.href = exportCanvas.toDataURL("image/png");
+      link.click();
+    });
+
+    // Inisialisasi Pertama
+    window.addEventListener("DOMContentLoaded", () => {
+      loadState();
+      resizeCanvas();
+      renderNodes();
+    });
+  </script>
+</body>
+</html>
