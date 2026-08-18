@@ -28,7 +28,6 @@
       padding: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       -webkit-tap-highlight-color: transparent;
-      user-select: none;
     }
 
     body {
@@ -39,18 +38,21 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      touch-action: none;
     }
 
     /* Top Navigation / App Header */
     header {
       background-color: var(--panel-bg);
       border-bottom: 1px solid var(--card-border);
-      padding: 10px 16px;
+      padding: 10px 12px;
       display: flex;
       justify-content: space-between;
       align-items: center;
       z-index: 50;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+      flex-wrap: wrap;
+      gap: 8px;
     }
 
     .brand-group {
@@ -59,7 +61,7 @@
     }
 
     .brand-title {
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       font-weight: 800;
       letter-spacing: 1px;
       background: linear-gradient(135deg, #a7f3d0 0%, #00e676 50%, #008f4c 100%);
@@ -109,21 +111,22 @@
     .toolbar {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
+      flex-wrap: wrap;
     }
 
     .btn {
       background: linear-gradient(135deg, var(--emerald-primary), var(--emerald-dark));
       color: #040805;
       border: none;
-      padding: 8px 14px;
+      padding: 7px 10px;
       border-radius: 6px;
       font-weight: 700;
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       transition: var(--transition);
       text-transform: uppercase;
       letter-spacing: 0.5px;
@@ -139,20 +142,10 @@
       border: 1px solid var(--card-border);
     }
 
-    .btn-secondary:hover {
-      border-color: var(--emerald-primary);
-      box-shadow: 0 0 8px var(--emerald-glow);
-    }
-
     .btn-danger {
       background: rgba(255, 82, 82, 0.15);
       color: var(--danger);
       border: 1px solid rgba(255, 82, 82, 0.3);
-    }
-
-    .btn-danger:hover {
-      background: var(--danger);
-      color: #fff;
     }
 
     /* Canvas Viewport */
@@ -160,14 +153,9 @@
       flex: 1;
       position: relative;
       overflow: hidden;
-      cursor: grab;
       background-size: 24px 24px;
-      background-image: 
-        radial-gradient(circle, #16291e 1px, transparent 1px);
-    }
-
-    #viewport:active {
-      cursor: grabbing;
+      background-image: radial-gradient(circle, #16291e 1.2px, transparent 1.2px);
+      touch-action: none;
     }
 
     #renderSurface {
@@ -191,8 +179,13 @@
       padding: 10px 12px;
       box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
       z-index: 20;
-      cursor: move;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .mind-node:active {
+      cursor: grabbing;
     }
 
     .mind-node.selected {
@@ -212,6 +205,7 @@
       margin-bottom: 6px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       padding-bottom: 4px;
+      pointer-events: auto;
     }
 
     .node-tag {
@@ -232,8 +226,8 @@
       border: none;
       color: var(--text-muted);
       cursor: pointer;
-      font-size: 0.75rem;
-      padding: 2px 4px;
+      font-size: 0.8rem;
+      padding: 2px 6px;
       border-radius: 4px;
       transition: var(--transition);
     }
@@ -243,7 +237,7 @@
       background: rgba(255, 255, 255, 0.1);
     }
 
-    .node-btn.delete:hover {
+    .node-btn.delete-btn:hover {
       color: var(--danger);
     }
 
@@ -254,26 +248,24 @@
       outline: none;
       word-break: break-word;
       user-select: text;
-    }
-
-    .node-body[contenteditable="true"] {
       cursor: text;
-      padding: 2px 4px;
-      background: rgba(0, 0, 0, 0.25);
+      padding: 4px;
+      background: rgba(0, 0, 0, 0.2);
       border-radius: 4px;
+      pointer-events: auto;
     }
 
     /* Floating Hint Badge */
     .floating-hint {
       position: absolute;
-      bottom: 16px;
-      left: 16px;
+      bottom: 12px;
+      left: 12px;
       background: rgba(13, 20, 16, 0.85);
       border: 1px solid var(--card-border);
       backdrop-filter: blur(8px);
-      padding: 8px 12px;
+      padding: 6px 10px;
       border-radius: 8px;
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       color: var(--text-muted);
       z-index: 40;
       pointer-events: none;
@@ -283,7 +275,7 @@
       color: var(--emerald-light);
     }
 
-    /* Modal / File Input Utilities */
+    /* File Input Utility */
     .file-wrapper {
       position: relative;
       display: inline-block;
@@ -314,7 +306,7 @@
 
     <div class="toolbar">
       <button class="btn" id="btnAddNode">+ Node Baru</button>
-      <button class="btn btn-secondary" id="btnExportPNG">Export PNG</button>
+      <button class="btn btn-secondary" id="btnExportPNG">PNG</button>
       <button class="btn btn-secondary" id="btnExportJSON">Backup</button>
       <div class="file-wrapper">
         <button class="btn btn-secondary">Restore</button>
@@ -327,14 +319,12 @@
   <!-- Interactive Workspace Canvas -->
   <main id="viewport">
     <canvas id="renderSurface"></canvas>
-    <!-- Dynamic HTML Nodes inserted here -->
     <div class="floating-hint">
-      Klik 2x kanvas: <strong>Buat Node</strong> | Klik tombol ⚡: <strong>Tarik Garis Relasi</strong>
+      Geser kartu: <strong>Tahan & Tarik</strong> | Relasi: <strong>Klik ⚡</strong>
     </div>
   </main>
 
   <script>
-    // Storage Key & Central State
     const STORAGE_KEY = "emeraldflow_v1_fatur62";
     let state = {
       nodes: [],
@@ -349,7 +339,7 @@
     const canvas = document.getElementById("renderSurface");
     const ctx = canvas.getContext("2d");
 
-    // Menyesuaikan Ukuran Canvas secara Responsif
+    // Menyesuaikan Ukuran Canvas secara Realtime
     const resizeCanvas = () => {
       canvas.width = viewport.clientWidth;
       canvas.height = viewport.clientHeight;
@@ -393,23 +383,17 @@
       }
     };
 
-    // Data Awal Bawaan jika Storage Kosong
     const initDefaultData = () => {
       state = {
         nodes: [
-          { id: "node_1", x: 100, y: 120, tag: "Root", text: "Ide Utama Proyek 20" },
-          { id: "node_2", x: 380, y: 80, tag: "Fitur", text: "Arsitektur 1 File index.html" },
-          { id: "node_3", x: 380, y: 220, tag: "Desain", text: "Emerald Luxury Theme" }
+          { id: "node_1", x: 40, y: 80, tag: "Topik", text: "Sistem Saraf Manusia" }
         ],
-        connections: [
-          { id: "conn_1", from: "node_1", to: "node_2" },
-          { id: "conn_2", from: "node_1", to: "node_3" }
-        ]
+        connections: []
       };
       saveState();
     };
 
-    // Gambar Garis Relasi Lengkung (Cubic Bézier Curve)
+    // Gambar Garis Relasi Bezier Curve
     const drawConnections = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -431,7 +415,6 @@
 
         const dx = Math.max(Math.abs(endX - startX) * 0.5, 40);
 
-        // Gradient Jalur Garis Emerald Luxury
         const gradient = ctx.createLinearGradient(startX, startY, endX, endY);
         gradient.addColorStop(0, "#00e676");
         gradient.addColorStop(1, "#69f0ae");
@@ -446,7 +429,6 @@
         ctx.stroke();
         ctx.shadowBlur = 0;
 
-        // Gambar Titik Panah Lingkaran di Ujung Tujuan
         ctx.beginPath();
         ctx.arc(endX, endY, 4, 0, Math.PI * 2);
         ctx.fillStyle = "#69f0ae";
@@ -454,9 +436,28 @@
       });
     };
 
-    // Render Ulang Seluruh Elemen DOM Node
+    // Helper untuk menangkap koordinat mouse/touch
+    const getPointerPos = (e) => {
+      if (e.touches && e.touches.length > 0) {
+        return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+      return { x: e.clientX, y: e.clientY };
+    };
+
+    // Mulai Drag (Mouse & Touchscreen Support)
+    const handleDragStart = (e, node) => {
+      if (e.target.closest(".node-btn") || e.target.classList.contains("node-body")) return;
+      const pos = getPointerPos(e);
+      draggedNodeId = node.id;
+      dragOffset.x = pos.x - node.x;
+      dragOffset.y = pos.y - node.y;
+
+      const elem = document.getElementById(node.id);
+      if (elem) elem.classList.add("selected");
+    };
+
+    // Render Elemen Node ke Layar
     const renderNodes = () => {
-      // Hapus node DOM lama tanpa menghapus canvas dan hint
       const existingNodes = viewport.querySelectorAll(".mind-node");
       existingNodes.forEach(n => n.remove());
 
@@ -479,33 +480,28 @@
               <button class="node-btn delete-btn" title="Hapus Node">✕</button>
             </div>
           </div>
-          <div class="node-body" contenteditable="true">${escapeHTML(node.text || "Tulis catatan...")}</div>
+          <div class="node-body" contenteditable="true">${escapeHTML(node.text || "Ketik konsep...")}</div>
         `;
 
-        // Event Drag Node
-        nodeDiv.addEventListener("mousedown", (e) => {
-          if (e.target.closest(".node-btn") || e.target.classList.contains("node-body")) return;
-          draggedNodeId = node.id;
-          dragOffset.x = e.clientX - node.x;
-          dragOffset.y = e.clientY - node.y;
-          nodeDiv.classList.add("selected");
-        });
+        // Event Drag untuk Desktop Mouse & Mobile Touchscreen
+        nodeDiv.addEventListener("mousedown", (e) => handleDragStart(e, node));
+        nodeDiv.addEventListener("touchstart", (e) => handleDragStart(e, node), { passive: false });
 
-        // Event Simpan Edit Teks Inline
+        // Event Simpan Teks Inline
         const bodyElem = nodeDiv.querySelector(".node-body");
         bodyElem.addEventListener("blur", () => {
           node.text = bodyElem.innerText.trim() || "Catatan Kosong";
           saveState();
         });
 
-        // Event Hubungkan Relasi
+        // Event Relasi (⚡)
         const connBtn = nodeDiv.querySelector(".connect-btn");
         connBtn.addEventListener("click", (e) => {
           e.stopPropagation();
           handleConnectionToggle(node.id);
         });
 
-        // Event Hapus Node
+        // Event Hapus (✕)
         const deleteBtn = nodeDiv.querySelector(".delete-btn");
         deleteBtn.addEventListener("click", (e) => {
           e.stopPropagation();
@@ -518,7 +514,7 @@
       drawConnections();
     };
 
-    // Logic Menghubungkan Dua Node
+    // Logic Menghubungkan Dua Kartu
     const handleConnectionToggle = (nodeId) => {
       if (!activeConnectingSourceId) {
         activeConnectingSourceId = nodeId;
@@ -527,7 +523,6 @@
         activeConnectingSourceId = null;
         renderNodes();
       } else {
-        // Cek apakah relasi sudah ada
         const exists = state.connections.some(
           c => (c.from === activeConnectingSourceId && c.to === nodeId)
         );
@@ -545,7 +540,7 @@
       }
     };
 
-    // Hapus Node beserta Relasi yang Terhubung
+    // Hapus Node
     const deleteNode = (nodeId) => {
       state.nodes = state.nodes.filter(n => n.id !== nodeId);
       state.connections = state.connections.filter(c => c.from !== nodeId && c.to !== nodeId);
@@ -555,12 +550,12 @@
     };
 
     // Tambah Node Baru
-    const createNewNode = (x = 180, y = 160) => {
+    const createNewNode = (x = 60, y = 140) => {
       const newNode = {
         id: `node_${Date.now()}`,
-        x: Math.max(20, x),
-        y: Math.max(20, y),
-        tag: "Ide",
+        x: Math.max(10, x),
+        y: Math.max(10, y),
+        tag: "Cabang",
         text: "Ketik konsep baru..."
       };
       state.nodes.push(newNode);
@@ -568,15 +563,16 @@
       renderNodes();
     };
 
-    // Event Global Drag Movement
-    window.addEventListener("mousemove", (e) => {
+    // Pergerakan Drag Global (Mouse & Touchscreen)
+    const handlePointerMove = (e) => {
       if (!draggedNodeId) return;
 
       const node = state.nodes.find(n => n.id === draggedNodeId);
       if (!node) return;
 
-      node.x = Math.max(10, e.clientX - dragOffset.x);
-      node.y = Math.max(10, e.clientY - dragOffset.y);
+      const pos = getPointerPos(e);
+      node.x = Math.max(5, pos.x - dragOffset.x);
+      node.y = Math.max(5, pos.y - dragOffset.y);
 
       const elem = document.getElementById(node.id);
       if (elem) {
@@ -585,36 +581,35 @@
       }
 
       drawConnections();
-    });
+    };
 
-    window.addEventListener("mouseup", () => {
+    const handlePointerEnd = () => {
       if (draggedNodeId) {
         const elem = document.getElementById(draggedNodeId);
         if (elem) elem.classList.remove("selected");
         draggedNodeId = null;
         saveState();
       }
-    });
+    };
 
-    // Double-Click Kanvas Kosong untuk Bikin Node
-    viewport.addEventListener("dblclick", (e) => {
-      if (e.target === viewport || e.target === canvas) {
-        createNewNode(e.clientX - 80, e.clientY - 40);
-      }
-    });
+    window.addEventListener("mousemove", handlePointerMove);
+    window.addEventListener("touchmove", handlePointerMove, { passive: false });
 
-    // Handler Tombol Header
+    window.addEventListener("mouseup", handlePointerEnd);
+    window.addEventListener("touchend", handlePointerEnd);
+
+    // Event Listener Toolbar
     document.getElementById("btnAddNode").addEventListener("click", () => createNewNode());
 
     document.getElementById("btnClearCanvas").addEventListener("click", () => {
-      if (confirm("Hapus seluruh node dan diagram?")) {
+      if (confirm("Hapus seluruh kartu dan diagram?")) {
         state = { nodes: [], connections: [] };
         saveState();
         renderNodes();
       }
     });
 
-    // Backup Data JSON
+    // Backup & Restore
     document.getElementById("btnExportJSON").addEventListener("click", () => {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
       const anchor = document.createElement("a");
@@ -625,7 +620,6 @@
       anchor.remove();
     });
 
-    // Restore Data JSON
     document.getElementById("importFileInput").addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
@@ -640,7 +634,7 @@
             renderNodes();
             alert("Mindmap berhasil dipulihkan!");
           } else {
-            alert("Format JSON tidak valid!");
+            alert("Format file JSON tidak valid.");
           }
         } catch (err) {
           alert("Gagal membaca file JSON.");
@@ -650,7 +644,7 @@
       e.target.value = "";
     });
 
-    // Export High-Resolution PNG
+    // Export PNG
     document.getElementById("btnExportPNG").addEventListener("click", () => {
       const exportCanvas = document.createElement("canvas");
       exportCanvas.width = viewport.clientWidth * 2;
@@ -658,11 +652,9 @@
       const expCtx = exportCanvas.getContext("2d");
       expCtx.scale(2, 2);
 
-      // Background Emerald Gelap
       expCtx.fillStyle = "#060907";
       expCtx.fillRect(0, 0, viewport.clientWidth, viewport.clientHeight);
 
-      // Render Connections pada Export Canvas
       state.connections.forEach(conn => {
         const fromNode = state.nodes.find(n => n.id === conn.from);
         const toNode = state.nodes.find(n => n.id === conn.to);
@@ -686,7 +678,6 @@
         expCtx.stroke();
       });
 
-      // Render Nodes ke Canvas
       state.nodes.forEach(node => {
         const elem = document.getElementById(node.id);
         if (!elem) return;
@@ -694,7 +685,6 @@
         const w = elem.offsetWidth;
         const h = elem.offsetHeight;
 
-        // Card Box
         expCtx.fillStyle = "#121c16";
         expCtx.strokeStyle = "#1e3326";
         expCtx.lineWidth = 1;
@@ -703,18 +693,15 @@
         expCtx.fill();
         expCtx.stroke();
 
-        // Card Header Tag
         expCtx.fillStyle = "#69f0ae";
         expCtx.font = "bold 10px sans-serif";
         expCtx.fillText((node.tag || "Node").toUpperCase(), node.x + 10, node.y + 16);
 
-        // Card Text Content
         expCtx.fillStyle = "#f1f8f3";
         expCtx.font = "12px sans-serif";
         expCtx.fillText(node.text || "", node.x + 10, node.y + 36);
       });
 
-      // Trigger Download
       const link = document.createElement("a");
       link.download = `emeraldflow_diagram_${Date.now()}.png`;
       link.href = exportCanvas.toDataURL("image/png");
