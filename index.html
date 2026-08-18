@@ -41,7 +41,6 @@
       touch-action: none;
     }
 
-    /* Top Navigation / App Header */
     header {
       background-color: var(--panel-bg);
       border-bottom: 1px solid var(--card-border);
@@ -107,7 +106,6 @@
       }
     }
 
-    /* Toolbar Action Controls */
     .toolbar {
       display: flex;
       align-items: center;
@@ -148,7 +146,6 @@
       border: 1px solid rgba(255, 82, 82, 0.3);
     }
 
-    /* Canvas Viewport */
     #viewport {
       flex: 1;
       position: relative;
@@ -164,11 +161,9 @@
       left: 0;
       width: 100%;
       height: 100%;
-      pointer-events: none;
       z-index: 10;
     }
 
-    /* Interactive Node Card */
     .mind-node {
       position: absolute;
       min-width: 140px;
@@ -214,6 +209,16 @@
       color: var(--emerald-light);
       text-transform: uppercase;
       letter-spacing: 0.5px;
+      cursor: text;
+      outline: none;
+      padding: 2px 4px;
+      border-radius: 3px;
+      user-select: text;
+    }
+
+    .node-tag:focus {
+      background: rgba(0, 230, 118, 0.15);
+      border: 1px solid var(--emerald-primary);
     }
 
     .node-tools {
@@ -255,7 +260,6 @@
       pointer-events: auto;
     }
 
-    /* Floating Hint Badge */
     .floating-hint {
       position: absolute;
       bottom: 12px;
@@ -275,7 +279,6 @@
       color: var(--emerald-light);
     }
 
-    /* File Input Utility */
     .file-wrapper {
       position: relative;
       display: inline-block;
@@ -294,7 +297,6 @@
 </head>
 <body>
 
-  <!-- Top Application Bar -->
   <header>
     <div class="brand-group">
       <h1 class="brand-title">EmeraldFlow</h1>
@@ -316,11 +318,10 @@
     </div>
   </header>
 
-  <!-- Interactive Workspace Canvas -->
   <main id="viewport">
     <canvas id="renderSurface"></canvas>
     <div class="floating-hint">
-      Geser kartu: <strong>Tahan & Tarik</strong> | Relasi: <strong>Klik ⚡</strong>
+      Tag & Teks: <strong>Bisa diedit langsung</strong> | Hubungkan/Putus: <strong>Klik ⚡</strong>
     </div>
   </main>
 
@@ -339,7 +340,6 @@
     const canvas = document.getElementById("renderSurface");
     const ctx = canvas.getContext("2d");
 
-    // Menyesuaikan Ukuran Canvas secara Realtime
     const resizeCanvas = () => {
       canvas.width = viewport.clientWidth;
       canvas.height = viewport.clientHeight;
@@ -348,14 +348,12 @@
 
     window.addEventListener("resize", resizeCanvas);
 
-    // Sanitasi Teks Anti-XSS
     const escapeHTML = (str) => {
       const div = document.createElement("div");
       div.textContent = str;
       return div.innerHTML;
     };
 
-    // Load State dari LocalStorage Secara Aman
     const loadState = () => {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
@@ -386,14 +384,13 @@
     const initDefaultData = () => {
       state = {
         nodes: [
-          { id: "node_1", x: 40, y: 80, tag: "Topik", text: "Sistem Saraf Manusia" }
+          { id: "node_1", x: 40, y: 80, tag: "UTAMA", text: "Sistem Saraf Manusia" }
         ],
         connections: []
       };
       saveState();
     };
 
-    // Gambar Garis Relasi Bezier Curve
     const drawConnections = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -436,7 +433,6 @@
       });
     };
 
-    // Helper untuk menangkap koordinat mouse/touch
     const getPointerPos = (e) => {
       if (e.touches && e.touches.length > 0) {
         return { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -444,9 +440,8 @@
       return { x: e.clientX, y: e.clientY };
     };
 
-    // Mulai Drag (Mouse & Touchscreen Support)
     const handleDragStart = (e, node) => {
-      if (e.target.closest(".node-btn") || e.target.classList.contains("node-body")) return;
+      if (e.target.closest(".node-btn") || e.target.classList.contains("node-body") || e.target.classList.contains("node-tag")) return;
       const pos = getPointerPos(e);
       draggedNodeId = node.id;
       dragOffset.x = pos.x - node.x;
@@ -456,7 +451,6 @@
       if (elem) elem.classList.add("selected");
     };
 
-    // Render Elemen Node ke Layar
     const renderNodes = () => {
       const existingNodes = viewport.querySelectorAll(".mind-node");
       existingNodes.forEach(n => n.remove());
@@ -474,34 +468,38 @@
 
         nodeDiv.innerHTML = `
           <div class="node-header">
-            <span class="node-tag">${escapeHTML(node.tag || "Node")}</span>
+            <span class="node-tag" contenteditable="true" title="Klik untuk ubah nama tag">${escapeHTML(node.tag || "UTAMA")}</span>
             <div class="node-tools">
-              <button class="node-btn connect-btn" title="Hubungkan Relasi">⚡</button>
+              <button class="node-btn connect-btn" title="Hubungkan/Putus Garis">⚡</button>
               <button class="node-btn delete-btn" title="Hapus Node">✕</button>
             </div>
           </div>
           <div class="node-body" contenteditable="true">${escapeHTML(node.text || "Ketik konsep...")}</div>
         `;
 
-        // Event Drag untuk Desktop Mouse & Mobile Touchscreen
         nodeDiv.addEventListener("mousedown", (e) => handleDragStart(e, node));
         nodeDiv.addEventListener("touchstart", (e) => handleDragStart(e, node), { passive: false });
 
-        // Event Simpan Teks Inline
+        // Simpan Edit Tag
+        const tagElem = nodeDiv.querySelector(".node-tag");
+        tagElem.addEventListener("blur", () => {
+          node.tag = tagElem.innerText.trim().toUpperCase() || "CABANG";
+          saveState();
+        });
+
+        // Simpan Edit Isi Teks
         const bodyElem = nodeDiv.querySelector(".node-body");
         bodyElem.addEventListener("blur", () => {
           node.text = bodyElem.innerText.trim() || "Catatan Kosong";
           saveState();
         });
 
-        // Event Relasi (⚡)
         const connBtn = nodeDiv.querySelector(".connect-btn");
         connBtn.addEventListener("click", (e) => {
           e.stopPropagation();
           handleConnectionToggle(node.id);
         });
 
-        // Event Hapus (✕)
         const deleteBtn = nodeDiv.querySelector(".delete-btn");
         deleteBtn.addEventListener("click", (e) => {
           e.stopPropagation();
@@ -514,7 +512,6 @@
       drawConnections();
     };
 
-    // Logic Menghubungkan Dua Kartu
     const handleConnectionToggle = (nodeId) => {
       if (!activeConnectingSourceId) {
         activeConnectingSourceId = nodeId;
@@ -523,24 +520,29 @@
         activeConnectingSourceId = null;
         renderNodes();
       } else {
-        const exists = state.connections.some(
-          c => (c.from === activeConnectingSourceId && c.to === nodeId)
+        const source = activeConnectingSourceId;
+        const target = nodeId;
+
+        const existingIndex = state.connections.findIndex(
+          c => (c.from === source && c.to === target) || (c.from === target && c.to === source)
         );
 
-        if (!exists) {
+        if (existingIndex !== -1) {
+          state.connections.splice(existingIndex, 1);
+        } else {
           state.connections.push({
             id: `conn_${Date.now()}`,
-            from: activeConnectingSourceId,
-            to: nodeId
+            from: source,
+            to: target
           });
-          saveState();
         }
+
+        saveState();
         activeConnectingSourceId = null;
         renderNodes();
       }
     };
 
-    // Hapus Node
     const deleteNode = (nodeId) => {
       state.nodes = state.nodes.filter(n => n.id !== nodeId);
       state.connections = state.connections.filter(c => c.from !== nodeId && c.to !== nodeId);
@@ -549,21 +551,21 @@
       renderNodes();
     };
 
-    // Tambah Node Baru
+    // Node pertama = "UTAMA", node berikutnya = "CABANG"
     const createNewNode = (x = 60, y = 140) => {
+      const isFirst = state.nodes.length === 0;
       const newNode = {
         id: `node_${Date.now()}`,
         x: Math.max(10, x),
         y: Math.max(10, y),
-        tag: "Cabang",
-        text: "Ketik konsep baru..."
+        tag: isFirst ? "UTAMA" : "CABANG",
+        text: isFirst ? "Topik Utama" : "Ketik konsep baru..."
       };
       state.nodes.push(newNode);
       saveState();
       renderNodes();
     };
 
-    // Pergerakan Drag Global (Mouse & Touchscreen)
     const handlePointerMove = (e) => {
       if (!draggedNodeId) return;
 
@@ -598,7 +600,6 @@
     window.addEventListener("mouseup", handlePointerEnd);
     window.addEventListener("touchend", handlePointerEnd);
 
-    // Event Listener Toolbar
     document.getElementById("btnAddNode").addEventListener("click", () => createNewNode());
 
     document.getElementById("btnClearCanvas").addEventListener("click", () => {
@@ -609,7 +610,6 @@
       }
     });
 
-    // Backup & Restore
     document.getElementById("btnExportJSON").addEventListener("click", () => {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(state, null, 2));
       const anchor = document.createElement("a");
@@ -644,7 +644,6 @@
       e.target.value = "";
     });
 
-    // Export PNG
     document.getElementById("btnExportPNG").addEventListener("click", () => {
       const exportCanvas = document.createElement("canvas");
       exportCanvas.width = viewport.clientWidth * 2;
@@ -708,7 +707,6 @@
       link.click();
     });
 
-    // Inisialisasi Pertama
     window.addEventListener("DOMContentLoaded", () => {
       loadState();
       resizeCanvas();
